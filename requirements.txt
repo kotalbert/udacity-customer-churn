@@ -1,0 +1,11 @@
+scipy
+numpy
+pandas
+scikit-learn
+scikit-image
+matplotlib
+seaborn
+joblib
+jupyter
+pylint
+shap
