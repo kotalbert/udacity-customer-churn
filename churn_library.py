@@ -26,7 +26,7 @@ def perform_eda(df: pd.DataFrame) -> None:
     """
     _create_histogram(df, 'Churn', 'churn_hist.png')
     _create_histogram(df, 'Customer_Age', 'customer_age.png')
-    _create_distplot(df, 'Total_Trans_Ct','total_trans_ct_distplot.png')
+    _create_distplot(df, 'Total_Trans_Ct', 'total_trans_ct_distplot.png')
     _create_heatmap(df, 'correlation_heatmap.png')
 
 

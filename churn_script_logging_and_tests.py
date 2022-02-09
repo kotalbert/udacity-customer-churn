@@ -124,7 +124,7 @@ def test_eda():
     df = get_df_with_target(import_data(DATA_FILE_NAME))
     perform_eda(df)
 
-    plots_expected = ['churn_hist.png', 'customer_age.png', 'total_trans_ct_distplot.png']
+    plots_expected = ['churn_hist.png', 'customer_age.png', 'total_trans_ct_distplot.png', 'correlation_heatmap.png']
 
     try:
         for ei in plots_expected:
