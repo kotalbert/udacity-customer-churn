@@ -1,37 +1,100 @@
-# library doc string
+"""
+Module for Customer Churn ML Pipeline.
+"""
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 
-# import libraries
-
-
-def import_data(pth):
+def import_data(pth: str) -> pd.DataFrame:
     """
-    returns dataframe for the csv found at pth
+    Returns dataframe for the csv found at pth.
 
-    input:
-            pth: a path to the csv
-    output:
-            df: pandas dataframe
+    :param pth: a path to the csv
+    :return: pandas DataFrame with modeling data
     """
-    pass
+
+    return pd.read_csv(pth)
 
 
-def perform_eda(df):
+def perform_eda(df: pd.DataFrame) -> None:
     """
-    perform eda on df and save figures to images folder
-    input:
-            df: pandas dataframe
+    Perform eda on df and save figures to `images` dorectory.
 
-    output:
-            None
+    :param df: pandas DataFrame with modeling data
     """
-    pass
+    _create_histogram(df, 'Churn', 'churn_hist.png')
+    _create_histogram(df, 'Customer_Age', 'customer_age.png')
+    _create_distplot(df, 'Total_Trans_Ct','total_trans_ct_distplot.png')
+    _create_heatmap(df, 'correlation_heatmap.png')
+
+
+def _create_histogram(df: pd.DataFrame, var_name: str, out_file_name: str) -> None:
+    """
+    Create histogram of a variable and save to png file.
+
+    :param df: data frame for plot
+    :param var_name: column name for plot
+    :param out_file_name: name of output file
+    """
+
+    plt.figure(figsize=(20, 10))
+    plt.title(var_name)
+    df[var_name].hist()
+    plt.savefig(f'./images/{out_file_name}')
+
+
+def _create_distplot(df: pd.DataFrame, var_name: str, out_file_name: str) -> None:
+    """
+    Create distribution plot of a variable and save to png file.
+
+    :param df: data frame for plot
+    :param var_name: column name for plot
+    :param out_file_name: name of output file
+    """
+
+    plt.figure(figsize=(20, 10))
+    sns.distplot(df[var_name])
+    plt.savefig(f'./images/{out_file_name}')
+
+
+def _create_heatmap(df: pd.DataFrame, out_file_name: str) -> None:
+    """
+    Create variables correlation heatmap and save to png file.
+
+    :param df: data frame for plot
+    :param out_file_name: name of output file
+    """
+
+    plt.figure(figsize=(20, 10))
+    sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
+    plt.savefig(f'./images/{out_file_name}')
+
+
+def get_df_with_target(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create a target variable 'Churn' and return new data frame with this variable added.
+
+    :param df: df with data for model
+    :return: pandas DataFrame with target variable added
+    :raises ValueError: when data frame does not have required columns
+    """
+
+    try:
+        assert 'Attrition_Flag' in df.columns
+    except AssertionError:
+        raise ValueError('Input data frame is missing required variables.')
+
+    df_out = df.copy()
+    df_out['Churn'] = df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
+    return df_out
 
 
 def encoder_helper(df, category_lst, response):
     """
     helper function to turn each categorical column into a new column with
-    propotion of churn for each category - associated with cell 15 from the notebook
+    proportion of churn for each category - associated with cell 15 from the notebook
 
     input:
             df: pandas dataframe
