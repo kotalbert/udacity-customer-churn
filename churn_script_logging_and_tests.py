@@ -4,7 +4,7 @@ import os
 
 import pandas as pd
 
-from churn_library import import_data, get_df_with_target, perform_eda
+from churn_library import import_data, get_df_with_target, perform_eda, encoder_helper
 
 logging.basicConfig(
     filename='./logs/churn_library.log',
@@ -129,34 +129,43 @@ def test_eda():
     try:
         for ei in plots_expected:
             assert os.path.isfile(os.path.join('images', ei))
-        logging.info(f'Testing perform_eda: SUCCESS')
+        logging.info(f'Testing `perform_eda`: SUCCESS')
 
     except AssertionError as e:
-        logging.error(f'Testing `perform_eda`: expected plot was not generated')
+        logging.error('Testing `perform_eda`: expected plot was not generated')
         raise e
 
 
-#
-#
-# def test_encoder_helper(encoder_helper):
-#     """
-#     test encoder helper
-#     """
-#     pass
-#
-#
-# def test_perform_feature_engineering(perform_feature_engineering):
-#     """
-#     test perform_feature_engineering
-#     """
-#     pass
-#
-#
-# def test_train_models(train_models):
-#     """
-#     test train_models
-#     """
-#     pass
+def test_encoder_helper():
+    """Function should add new categorical columns to data frame."""
+
+    df = get_df_with_target(import_data(DATA_FILE_NAME))
+
+    category_lst = ['Gender', 'Education_Level', 'Marital_Status', 'Income_Category', 'Card_Category']
+    df_with_cat_vars = encoder_helper(df, category_lst)
+
+    expected_category_variables = [f'{var_name}_Churn' for var_name in category_lst]
+
+    try:
+        assert set(df_with_cat_vars).issuperset(expected_category_variables)
+    except AssertionError as e:
+        logging.error('Testing `encoder_helper`: expected variable not added to df')
+        raise e
+    logging.info('Testing `encoder_helper`: SUCCESS')
+
+
+def test_perform_feature_engineering():
+    """
+    test perform_feature_engineering
+    """
+    pass
+
+
+def test_train_models():
+    """
+    test train_models
+    """
+    pass
 
 
 if __name__ == "__main__":
@@ -164,3 +173,4 @@ if __name__ == "__main__":
     test_import_data_integrity()
     test_get_df_with_target()
     test_eda()
+    test_encoder_helper()

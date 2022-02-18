@@ -1,6 +1,7 @@
 """
 Module for Customer Churn ML Pipeline.
 """
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -91,20 +92,28 @@ def get_df_with_target(df: pd.DataFrame) -> pd.DataFrame:
     return df_out
 
 
-def encoder_helper(df, category_lst, response):
+def encoder_helper(df: pd.DataFrame, category_lst: List[str], response: Optional[str] = None):
     """
-    helper function to turn each categorical column into a new column with
-    proportion of churn for each category - associated with cell 15 from the notebook
+    Helper function to turn each categorical column into a new column with proportion of churn for each category.
 
-    input:
-            df: pandas dataframe
-            category_lst: list of columns that contain categorical features
-            response: string of response name [optional argument that could be used for naming variables or index y column]
-
-    output:
-            df: pandas dataframe with new columns for
+    :param df: input data
+    :param category_lst: list of columns that contain categorical features
+    :param response: (optional) string of response name to be used for
+    :return: pandas dataframe with new columns
     """
-    pass
+
+    if response is None:
+        response = 'Churn'
+
+    df_out = df.copy()
+    for var_name in category_lst:
+        var_lst = []
+        var_groups = df_out.groupby(var_name).mean()[response]
+        for val in df_out[var_name]:
+            var_lst.append(var_groups.loc[val])
+        df_out[f'{var_name}_{response}'] = var_lst
+
+    return df_out
 
 
 def perform_feature_engineering(df, response):
