@@ -1,10 +1,12 @@
 import glob
 import logging
 import os
+from typing import List
 
 import pandas as pd
 
-from churn_library import import_data, get_df_with_target, perform_eda, encoder_helper, perform_feature_engineering
+from churn_library import import_data, get_df_with_target, perform_eda, encoder_helper, perform_feature_engineering, \
+    train_models
 
 logging.basicConfig(
     filename='./logs/churn_library.log',
@@ -12,7 +14,7 @@ logging.basicConfig(
     filemode='w',
     format='%(name)s - %(levelname)s - %(message)s')
 
-DATA_FILE_NAME = "./data/bank_data.csv"
+DATA_FILE_NAME = 'data/bank_data.csv'
 
 
 def test_import():
@@ -29,7 +31,7 @@ def test_import():
     try:
         assert isinstance(df, pd.DataFrame)
     except AssertionError as e:
-        logging.error('Testing `import_data`: Data read does not produce correct data frame')
+        logging.error("Testing `import_data`: Data read does not produce correct data frame")
         raise e
 
     try:
@@ -75,10 +77,10 @@ def test_import_data_integrity():
     try:
         assert columns_expected.issubset(columns_actual)
     except AssertionError as e:
-        logging.error('Testing `import_data` integrity: Data file is missing required columns')
+        logging.error("Testing `import_data` integrity: Data file is missing required columns")
         raise e
 
-    logging.info('Testing `import_data` integrity: SUCCESS')
+    logging.info("Testing `import_data` integrity: SUCCESS")
 
 
 def test_get_df_with_target():
@@ -98,21 +100,35 @@ def test_get_df_with_target():
     try:
         assert expected_columns_set == actual_columns_set
     except AssertionError as e:
-        logging.error('Testing `get_df_with_target`: target variable is missing from output df')
+        logging.error("Testing `get_df_with_target`: target variable is missing from output df")
         raise e
 
-    logging.info('Testing `get_df_with_target`SUCCESS')
+    logging.info("Testing `get_df_with_target`SUCCESS")
 
 
-def _clean_dir(pth: str) -> None:
+def _clean_dir(pth: str, ptrn: str = '*.png') -> None:
     """
     Utility to clear directory before testing if files are presetn.
 
-    :param pth: path to dir
+    :param pth: path to dir to be cleared
+    :param ptrn: optional, fille pattern to be cleared, defaults to '*.png'
     """
 
-    for img in glob.glob(os.path.join(pth, '*.png')):
+    for img in glob.glob(os.path.join(pth, ptrn)):
         os.remove(img)
+
+
+def _check_expected_files(pth: str, files_expected: List[str]) -> None:
+    """
+    Helper to check if expected files are in directory.
+
+    :param pth:
+    :param files_expected:
+    :raises AssertionError: if not all files present
+    """
+
+    files_actual = set(os.listdir(pth))
+    assert files_actual.issuperset(set(files_expected))
 
 
 def test_eda():
@@ -127,12 +143,10 @@ def test_eda():
     plots_expected = ['churn_hist.png', 'customer_age.png', 'total_trans_ct_distplot.png', 'correlation_heatmap.png']
 
     try:
-        for ei in plots_expected:
-            assert os.path.isfile(os.path.join('images', ei))
-        logging.info(f'Testing `perform_eda`: SUCCESS')
-
+        _check_expected_files('images', plots_expected)
+        logging.info(f"Testing `perform_eda`: SUCCESS")
     except AssertionError as e:
-        logging.error('Testing `perform_eda`: expected plot was not generated')
+        logging.error("Testing `perform_eda`: expected plot was not generated")
         raise e
 
 
@@ -149,9 +163,9 @@ def test_encoder_helper():
     try:
         assert set(df_with_cat_vars).issuperset(expected_category_variables)
     except AssertionError as e:
-        logging.error('Testing `encoder_helper`: expected variable not added to df')
+        logging.error("Testing `encoder_helper`: expected variable not added to df")
         raise e
-    logging.info('Testing `encoder_helper`: SUCCESS')
+    logging.info("Testing `encoder_helper`: SUCCESS")
 
 
 def test_perform_feature_engineering():
@@ -176,9 +190,35 @@ def test_perform_feature_engineering():
 
 def test_train_models():
     """
-    test train_models
+    Artifacts from model training should be created. 
     """
-    pass
+
+    _clean_dir('images')
+    _clean_dir('models', '*.pkl')
+
+    category_lst = ['Gender', 'Education_Level', 'Marital_Status', 'Income_Category', 'Card_Category']
+    df = encoder_helper(get_df_with_target(import_data(DATA_FILE_NAME)), category_lst)
+    x_train, x_test, y_train, y_test = perform_feature_engineering(df)
+
+    train_models(x_train, x_test, y_train, y_test)
+
+    plots_expected = ['feature_importance_plot.png', 'logistic_regresion_classification_report.png',
+                      'random_forest_classification_report.png']
+    try:
+        _check_expected_files('images', plots_expected)
+    except AssertionError as e:
+        logging.error("Testing `train_models`: expected plots were not generated")
+        raise e
+
+    models_expected = ['logistic_model.pkl', 'rfc_model.pkl']
+
+    try:
+        _check_expected_files('models', models_expected)
+    except AssertionError as e:
+        logging.error("Testing `train_models`: expected model binaries were not generated")
+        raise e
+
+    logging.info('Testing `train_models`: SUCCESS')
 
 
 if __name__ == "__main__":
@@ -187,3 +227,4 @@ if __name__ == "__main__":
     test_get_df_with_target()
     test_eda()
     test_encoder_helper()
+    test_train_models()

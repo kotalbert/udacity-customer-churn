@@ -1,15 +1,26 @@
 """
 Module for Customer Churn ML Pipeline.
 """
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union, Any
 
+import joblib
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split, GridSearchCV
+
+# type aliases
+DF = pd.DataFrame
+S = pd.Series
+RFC = RandomForestClassifier
+LRC = LogisticRegression
 
 
-def import_data(pth: str) -> pd.DataFrame:
+def import_data(pth: str) -> DF:
     """
     Returns dataframe for the csv found at pth.
 
@@ -20,7 +31,7 @@ def import_data(pth: str) -> pd.DataFrame:
     return pd.read_csv(pth)
 
 
-def perform_eda(df: pd.DataFrame) -> None:
+def perform_eda(df: DF) -> None:
     """
     Perform eda on df and save figures to `images` dorectory.
 
@@ -32,7 +43,7 @@ def perform_eda(df: pd.DataFrame) -> None:
     _create_heatmap(df, 'correlation_heatmap.png')
 
 
-def _create_histogram(df: pd.DataFrame, var_name: str, out_file_name: str) -> None:
+def _create_histogram(df: DF, var_name: str, out_file_name: str) -> None:
     """
     Create histogram of a variable and save to png file.
 
@@ -47,7 +58,7 @@ def _create_histogram(df: pd.DataFrame, var_name: str, out_file_name: str) -> No
     plt.savefig(f'./images/{out_file_name}')
 
 
-def _create_distplot(df: pd.DataFrame, var_name: str, out_file_name: str) -> None:
+def _create_distplot(df: DF, var_name: str, out_file_name: str) -> None:
     """
     Create distribution plot of a variable and save to png file.
 
@@ -61,7 +72,7 @@ def _create_distplot(df: pd.DataFrame, var_name: str, out_file_name: str) -> Non
     plt.savefig(f'./images/{out_file_name}')
 
 
-def _create_heatmap(df: pd.DataFrame, out_file_name: str) -> None:
+def _create_heatmap(df: DF, out_file_name: str) -> None:
     """
     Create variables correlation heatmap and save to png file.
 
@@ -74,7 +85,7 @@ def _create_heatmap(df: pd.DataFrame, out_file_name: str) -> None:
     plt.savefig(f'./images/{out_file_name}')
 
 
-def get_df_with_target(df: pd.DataFrame) -> pd.DataFrame:
+def get_df_with_target(df: DF) -> DF:
     """
     Create a target variable 'Churn' and return new data frame with this variable added.
 
@@ -93,7 +104,7 @@ def get_df_with_target(df: pd.DataFrame) -> pd.DataFrame:
     return df_out
 
 
-def encoder_helper(df: pd.DataFrame, category_lst: List[str], response: Optional[str] = 'Churn'):
+def encoder_helper(df: DF, category_lst: List[str], response: Optional[str] = 'Churn'):
     """
     Helper function to turn each categorical column into a new column with proportion of churn for each category.
 
@@ -114,8 +125,8 @@ def encoder_helper(df: pd.DataFrame, category_lst: List[str], response: Optional
     return df_out
 
 
-def perform_feature_engineering(df: pd.DataFrame, response: Optional[str] = 'Churn', keep_cols: Optional[List] = None) \
-        -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+def perform_feature_engineering(df: DF, response: Optional[str] = 'Churn', keep_cols: Optional[List] = None) \
+        -> Tuple[DF, DF, S, S]:
     """
     Keep relevant variables and split data to train and test samples.
 
@@ -145,52 +156,138 @@ def perform_feature_engineering(df: pd.DataFrame, response: Optional[str] = 'Chu
         return train_test_split(x, y, test_size=0.3, random_state=42)
 
 
-def classification_report_image(y_train,
-                                y_test,
-                                y_train_preds_lr,
-                                y_train_preds_rf,
-                                y_test_preds_lr,
-                                y_test_preds_rf):
+def classification_report_image(y_train, y_test, y_train_preds_lr, y_train_preds_rf, y_test_preds_lr,
+                                y_test_preds_rf) -> None:
     """
-    produces classification report for training and testing results and stores report as image
-    in images folder
-    input:
-            y_train: training response values
-            y_test:  test response values
-            y_train_preds_lr: training predictions from logistic regression
-            y_train_preds_rf: training predictions from random forest
-            y_test_preds_lr: test predictions from logistic regression
-            y_test_preds_rf: test predictions from random forest
+    Produces classification report for training and testing results and stores report as image in images folder.
 
-    output:
-             None
+    :param y_train: training response values
+    :param y_test:  test response values
+    :param y_train_preds_lr: training predictions from logistic regression
+    :param y_train_preds_rf: training predictions from random forest
+    :param y_test_preds_lr: test predictions from logistic regression
+    :param y_test_preds_rf: test predictions from random forest
     """
-    pass
+
+    _create_classification_report('Logistic Regresion', y_train, y_train_preds_lr, y_test, y_test_preds_lr)
+    _create_classification_report('Random Forest', y_train, y_train_preds_rf, y_test, y_test_preds_rf)
 
 
-def feature_importance_plot(model, X_data, output_pth):
+def _slugify(s: str) -> str:
     """
-    creates and stores the feature importances in pth
-    input:
-            model: model object containing feature_importances_
-            X_data: pandas dataframe of X values
-            output_pth: path to store the figure
+    Helper to create consistent file name from a string.
+    """
 
-    output:
-             None
-    """
-    pass
+    return s.lower().replace(' ', '_')
 
 
-def train_models(X_train, X_test, y_train, y_test):
+def _create_classification_report(model_name: str, y_train, y_train_pred, y_test, y_test_pred) -> None:
     """
-    train, store model results: images + scores, and store models
-    input:
-              X_train: X training data
-              X_test: X testing data
-              y_train: y training data
-              y_test: y testing data
-    output:
-              None
+    Create a classification report and write as image.
+
+    :param model_name:
+    :param y_train:
+    :param y_train_pred:
+    :param y_test:
+    :param y_test_pred:
     """
-    pass
+
+    plt.text(0.01, 1.25, str(f'{model_name} Train'), {'fontsize': 10}, fontproperties='monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_pred)), {'fontsize': 10},
+             fontproperties='monospace')
+    plt.text(0.01, 0.6, str(f'{model_name} Test'), {'fontsize': 10}, fontproperties='monospace')
+    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_pred)), {'fontsize': 10},
+             fontproperties='monospace')
+    plt.axis('off')
+    output_file_name = _slugify(model_name)
+    plt.savefig(f'images/{output_file_name}_classification_report.png', )
+
+
+def feature_importance_plot(model: Any, x_data: DF, output_pth: str) -> None:
+    """
+    Creates and stores the feature importances in pth.
+
+    :param model: model object containing feature_importances_
+    :param x_data: pandas dataframe of X values
+    :param output_pth: path to store the figure
+    """
+
+    # object must have feature_importances_ attribute
+    assert hasattr(model, 'feature_importances_')
+
+    importances = model.feature_importances_
+    indices = np.argsort(importances)[::-1]
+
+    names = [x_data.columns[i] for i in indices]
+
+    plt.title("Feature Importance")
+    plt.ylabel('Importance')
+    plt.bar(range(x_data.shape[1]), importances[indices])
+    plt.xticks(range(x_data.shape[1]), names, rotation=90)
+    plt.savefig('images/feature_importance_plot.png')
+
+
+def train_models(x_train: DF, x_test: DF, y_train: S, y_test: S) -> None:
+    """
+    Train, store model results: images + scores, and store serialized models.
+
+    :param x_train: X training data
+    :param x_test: X testing data
+    :param y_train: y training data
+    :param y_test: y testing data
+    """
+
+    rfc = _train_rfc(x_train, y_train)
+    lrc = _train_lrc(x_train, y_train)
+
+    _dump_model(rfc, 'models/rfc_model.pkl')
+    _dump_model(lrc, 'models/logistic_model.pkl')
+
+    y_train_preds_lr = lrc.predict(x_train)
+    y_train_preds_rf = rfc.predict(x_train)
+    y_test_preds_lr = lrc.predict(x_test)
+    y_test_preds_rf = rfc.predict(x_test)
+
+    classification_report_image(y_train, y_test, y_train_preds_lr, y_train_preds_rf, y_test_preds_lr, y_test_preds_rf)
+    x_data = x_train.append(x_test)
+    feature_importance_plot(rfc, x_data, 'images/feature_importance_plot.png')
+
+
+def _dump_model(cls: Union[RFC, LRC], output_filename) -> None:
+    """
+    Serialize model and dump to file.
+
+    :param cls: model to serialize
+    :param output_filename:
+    """
+
+    joblib.dump(cls, output_filename)
+
+
+def _train_rfc(x_train: DF, y_train: S) -> RFC:
+    """
+    Train Random Forest Classifier.
+    """
+    rfc = RandomForestClassifier(random_state=42)
+    param_grid = {
+        'n_estimators': [200, 500],
+        'max_features': ['auto', 'sqrt'],
+        'max_depth': [4, 5, 100],
+        'criterion': ['gini', 'entropy']
+    }
+
+    # todo: restore param grid, before commit
+    param_grid = {}
+
+    cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
+    cv_rfc.fit(x_train, y_train)
+    return cv_rfc.best_estimator_
+
+
+def _train_lrc(x_train: DF, y_train: S) -> LRC:
+    """
+    Train Logistic Regression Classifier.
+    """
+
+    lrc = LogisticRegression()
+    return lrc.fit(x_train, y_train)
