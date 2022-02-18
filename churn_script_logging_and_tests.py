@@ -4,7 +4,7 @@ import os
 
 import pandas as pd
 
-from churn_library import import_data, get_df_with_target, perform_eda, encoder_helper
+from churn_library import import_data, get_df_with_target, perform_eda, encoder_helper, perform_feature_engineering
 
 logging.basicConfig(
     filename='./logs/churn_library.log',
@@ -156,9 +156,22 @@ def test_encoder_helper():
 
 def test_perform_feature_engineering():
     """
-    test perform_feature_engineering
+    Feature engineering should create test/train split of the input data.
     """
-    pass
+
+    category_lst = ['Gender', 'Education_Level', 'Marital_Status', 'Income_Category', 'Card_Category']
+    df = encoder_helper(get_df_with_target(import_data(DATA_FILE_NAME)), category_lst)
+    x_train, x_test, y_train, y_test = perform_feature_engineering(df)
+
+    try:
+        assert isinstance(x_train, pd.DataFrame)
+        assert isinstance(x_test, pd.DataFrame)
+        assert isinstance(y_train, pd.Series)
+        assert isinstance(y_test, pd.Series)
+    except AssertionError as e:
+        logging.error('Testing `perform_feature_engineering: expected data not created.')
+        raise e
+    logging.info('Testing `perform_feature_engineering`: SUCCESS')
 
 
 def test_train_models():
