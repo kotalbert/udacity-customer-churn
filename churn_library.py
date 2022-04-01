@@ -1,6 +1,7 @@
 """
 Module for Customer Churn ML Pipeline.
 """
+import os
 from typing import List, Optional, Tuple, Union, Any
 
 import joblib
@@ -18,6 +19,8 @@ DF = pd.DataFrame
 SR = pd.Series
 RFC = RandomForestClassifier
 LRC = LogisticRegression
+
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 
 def import_data(pth: str) -> DF:
