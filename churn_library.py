@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 
 # type aliases
 DF = pd.DataFrame
-S = pd.Series
+SR = pd.Series
 RFC = RandomForestClassifier
 LRC = LogisticRegression
 
@@ -31,16 +31,16 @@ def import_data(pth: str) -> DF:
     return pd.read_csv(pth)
 
 
-def perform_eda(df: DF) -> None:
+def perform_eda(data_frame: DF) -> None:
     """
     Perform eda on df and save figures to `images` dorectory.
 
-    :param df: pandas DataFrame with modeling data
+    :param data_frame: pandas DataFrame with modeling data
     """
-    _create_histogram(df, 'Churn', 'churn_hist.png')
-    _create_histogram(df, 'Customer_Age', 'customer_age.png')
-    _create_distplot(df, 'Total_Trans_Ct', 'total_trans_ct_distplot.png')
-    _create_heatmap(df, 'correlation_heatmap.png')
+    _create_histogram(data_frame, 'Churn', 'churn_hist.png')
+    _create_histogram(data_frame, 'Customer_Age', 'customer_age.png')
+    _create_distplot(data_frame, 'Total_Trans_Ct', 'total_trans_ct_distplot.png')
+    _create_heatmap(data_frame, 'correlation_heatmap.png')
 
 
 def _create_histogram(df: DF, var_name: str, out_file_name: str) -> None:
@@ -52,7 +52,6 @@ def _create_histogram(df: DF, var_name: str, out_file_name: str) -> None:
     :param out_file_name: name of output file
     """
 
-    plt.figure(figsize=(20, 10))
     plt.title(var_name)
     df[var_name].hist()
     plt.savefig(f'./images/{out_file_name}')
@@ -126,7 +125,7 @@ def encoder_helper(df: DF, category_lst: List[str], response: Optional[str] = 'C
 
 
 def perform_feature_engineering(df: DF, response: Optional[str] = 'Churn', keep_cols: Optional[List] = None) \
-        -> Tuple[DF, DF, S, S]:
+        -> Tuple[DF, DF, SR, SR]:
     """
     Keep relevant variables and split data to train and test samples.
 
@@ -224,10 +223,10 @@ def feature_importance_plot(model: Any, x_data: DF, output_pth: str) -> None:
     plt.ylabel('Importance')
     plt.bar(range(x_data.shape[1]), importances[indices])
     plt.xticks(range(x_data.shape[1]), names, rotation=90)
-    plt.savefig('images/feature_importance_plot.png')
+    plt.savefig(f'{output_pth}')
 
 
-def train_models(x_train: DF, x_test: DF, y_train: S, y_test: S) -> None:
+def train_models(x_train: DF, x_test: DF, y_train: SR, y_test: SR) -> None:
     """
     Train, store model results: images + scores, and store serialized models.
 
@@ -264,10 +263,11 @@ def _dump_model(cls: Union[RFC, LRC], output_filename) -> None:
     joblib.dump(cls, output_filename)
 
 
-def _train_rfc(x_train: DF, y_train: S) -> RFC:
+def _train_rfc(x_train: DF, y_train: SR) -> RFC:
     """
     Train Random Forest Classifier.
     """
+
     rfc = RandomForestClassifier(random_state=42)
     param_grid = {
         'n_estimators': [200, 500],
@@ -276,15 +276,12 @@ def _train_rfc(x_train: DF, y_train: S) -> RFC:
         'criterion': ['gini', 'entropy']
     }
 
-    # todo: restore param grid, before commit
-    param_grid = {}
-
     cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
     cv_rfc.fit(x_train, y_train)
     return cv_rfc.best_estimator_
 
 
-def _train_lrc(x_train: DF, y_train: S) -> LRC:
+def _train_lrc(x_train: DF, y_train: SR) -> LRC:
     """
     Train Logistic Regression Classifier.
     """

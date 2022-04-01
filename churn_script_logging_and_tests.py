@@ -1,3 +1,6 @@
+"""
+Module for churn prediction library unit tests and logging utilities.
+"""
 import glob
 import logging
 import os
@@ -144,7 +147,7 @@ def test_eda():
 
     try:
         _check_expected_files('images', plots_expected)
-        logging.info(f"Testing `perform_eda`: SUCCESS")
+        logging.info("Testing `perform_eda`: SUCCESS")
     except AssertionError as e:
         logging.error("Testing `perform_eda`: expected plot was not generated")
         raise e
@@ -190,7 +193,7 @@ def test_perform_feature_engineering():
 
 def test_train_models():
     """
-    Artifacts from model training should be created. 
+    Artifacts from model training should be created.
     """
 
     _clean_dir('images')
