@@ -1,5 +1,12 @@
 """
 Module for churn prediction library unit tests and logging utilities.
+
+Author: Pawel Daniluk
+Email: pawel@daniluk.waw.pl
+Date Created: 2022-02-06
+
+This module provides unit test for Customer Churn ML Pipeline.
+Unit test are intended to cover public interfaces of the churn_library.py module.
 """
 import glob
 import logging
@@ -205,7 +212,7 @@ def test_train_models():
 
     train_models(x_train, x_test, y_train, y_test)
 
-    plots_expected = ['feature_importance_plot.png', 'logistic_regresion_classification_report.png',
+    plots_expected = ['feature_importance_plot.png', 'logistic_regression_classification_report.png',
                       'random_forest_classification_report.png']
     try:
         _check_expected_files('images', plots_expected)

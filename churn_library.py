@@ -1,7 +1,18 @@
 """
 Module for Customer Churn ML Pipeline.
+
+Author: Pawel Daniluk
+Email: pawel@daniluk.waw.pl
+Date Created: 2022-02-06
+
+This module provides functionalities for:
+- data ingestion
+- exploratory data analysis
+- data transformation
+- feature engineering
+- model training
+- model validation
 """
-import os
 from typing import List, Optional, Tuple, Union, Any
 
 import joblib
@@ -19,8 +30,6 @@ DF = pd.DataFrame
 SR = pd.Series
 RFC = RandomForestClassifier
 LRC = LogisticRegression
-
-os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 
 def import_data(pth: str) -> DF:
@@ -289,5 +298,5 @@ def _train_lrc(x_train: DF, y_train: SR) -> LRC:
     Train Logistic Regression Classifier.
     """
 
-    lrc = LogisticRegression()
+    lrc = LogisticRegression(solver='liblinear')
     return lrc.fit(x_train, y_train)
