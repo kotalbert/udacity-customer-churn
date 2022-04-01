@@ -168,7 +168,7 @@ def classification_report_image(y_train, y_test, y_train_preds_lr, y_train_preds
     :param y_test_preds_rf: test predictions from random forest
     """
 
-    _create_classification_report('Logistic Regresion', y_train, y_train_preds_lr, y_test, y_test_preds_lr)
+    _create_classification_report('Logistic Regression', y_train, y_train_preds_lr, y_test, y_test_preds_lr)
     _create_classification_report('Random Forest', y_train, y_train_preds_rf, y_test, y_test_preds_rf)
 
 
