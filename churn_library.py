@@ -1,5 +1,17 @@
 """
 Module for Customer Churn ML Pipeline.
+
+Author: Pawel Daniluk
+Email: pawel@daniluk.waw.pl
+Date Created: 2022-02-06
+
+This module provides functionalities for:
+- data ingestion
+- exploratory data analysis
+- data transformation
+- feature engineering
+- model training
+- model validation
 """
 from typing import List, Optional, Tuple, Union, Any
 
@@ -286,5 +298,5 @@ def _train_lrc(x_train: DF, y_train: SR) -> LRC:
     Train Logistic Regression Classifier.
     """
 
-    lrc = LogisticRegression()
+    lrc = LogisticRegression(solver='liblinear')
     return lrc.fit(x_train, y_train)

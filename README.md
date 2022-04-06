@@ -38,11 +38,7 @@ Create virtual environment and install dependencies.
 make project-setup
 ```
 
-Start project virtual environment.
 
-```shell
-make start-venv 
-```
 
 Start environment and run unit tests.
 
@@ -69,7 +65,7 @@ Start project virtual environment.
 source ./venv/bin/activate
 ```
 
-After starting the environment, tests can be run with `pytest`, alternativelly using pure python
+After starting the environment, tests can be run with `pytest`, alternatively using pure python:
 
 ```shell
 pytest churn_script_logging_and_tests.py
